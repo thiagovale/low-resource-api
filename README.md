@@ -91,3 +91,9 @@ k6 run test.js
 
 * **Terminal 2 (k6):** Você verá o `k6` enviando requisições e recebendo respostas `HTTP 202 (Accepted)` muito rapidamente.
 * **Terminal 1 (Servidor):** Você verá os logs do "Trabalhador" (`Processing batch of ... items.`) aparecendo em um ritmo diferente, provando que o processamento está desacoplado do recebimento.
+
+## Resultado (Print do Teste)
+
+A imagem abaixo mostra o teste sendo executado (terminal superior) com 1.000.000 de requisições e o servidor (terminal inferior) processando a carga em lotes na VPS de 1 core / 1GB:
+
+![print.png](print.png)
