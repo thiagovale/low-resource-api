@@ -46,14 +46,21 @@ O "Trabalhador" (Consumidor) não processa 1 item de cada vez.
 * **Spring Boot 3+**
 * **Spring WebFlux** (Reativo / Netty)
 * **k6** (Ferramenta de Teste de Carga)
+* **[Docker](https://docs.docker.com/engine/install/)** para simular recurso limitado em máquina
 
 ---
 
 ## Como Executar e Testar Localmente
 
+#### Você pode testar: 
+1. Standalone: rodando direto na sua máquina
+2. Containers: usando docker containers simulado limitação dos recursos (requer Docker instalado)
+
 Para validar esta arquitetura em sua máquina, você precisará de dois terminais abertos no diretório do projeto e do [k6](https://k6.io/docs/getting-started/installation/) instalado.
 
-### 1. Empacotar a Aplicação
+### 1. Testando _standalone_
+
+#### Empacotar a Aplicação:
 
 Primeiro, compile e empacote o projeto em um arquivo `.jar`:
 
@@ -61,7 +68,7 @@ Primeiro, compile e empacote o projeto em um arquivo `.jar`:
 ./mvnw clean package
 ```
 
-### 2. Executar (Terminal 1 - O Servidor)
+#### Executar (Terminal 1 - O Servidor):
 
 No seu primeiro terminal, inicie a aplicação Java. Os logs de processamento (do "Trabalhador") aparecerão aqui.
 
@@ -70,7 +77,7 @@ java -jar target/low_resource_api-0.0.1-SNAPSHOT.jar
 ```
 *O servidor iniciará e ficará aguardando na porta 8080.*
 
-### 3. Testar (Terminal 2 - O Cliente)
+#### Testar (Terminal 2 - O Cliente):
 
 No seu segundo terminal, você usará o `k6` para disparar 1.000.000 de requisições.
 
@@ -87,10 +94,23 @@ const URL = 'http://localhost:8080/process';
 k6 run test.js
 ```
 
-### O Que Observar
+#### O Que Observar
 
 * **Terminal 2 (k6):** Você verá o `k6` enviando requisições e recebendo respostas `HTTP 202 (Accepted)` muito rapidamente.
 * **Terminal 1 (Servidor):** Você verá os logs do "Trabalhador" (`Processing batch of ... items.`) aparecendo em um ritmo diferente, provando que o processamento está desacoplado do recebimento.
+
+### 2. Testando usando docker containers ([como instalar docker](https://docs.docker.com/engine/install/))
+1. Abra um terminal até a pasta raíz do projeto
+2. Execute o comando: `docker build -t my-spring-webflux-app:latest .` para fazer build da imagem
+3. Execute o comando: `docker run --rm -p 8080:8080 --cpuset-cpus="0" --cpus=1 --memory=1g --memory-swap=1g -e JAVA_OPTS="$JAVA_OPTS" --name perf-test my-spring-webflux-app:latest`. O comando vai ser executado em _attached mode_ o que significa que você já vai ver o log da aplicação. Para sair (e fechar a aplicação `CTRL/CMD + C`)
+4. Execute, em um terminal diferente, o teste de carga: `k6 run test.js` 
+
+### comandos úteis:
+Abaixo, alguns comandos que podem ser uso para observabilidade do container (execute em um terminal separado):
+- Para visualizar uso dos recursos do container execute `docker stats perf-test`
+- Se quiser visualizar os logs da aplicação em um outro terminal, rode `docker logs -f perf-test` no terminal desejado.
+
+
 
 ## Resultado (Print do Teste)
 
